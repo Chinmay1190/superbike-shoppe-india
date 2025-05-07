@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { User, LogOut, Package, Heart, CreditCard, Settings } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -8,15 +8,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { getRecentlyViewedProducts } from "@/lib/utils";
+import ProductCard from "@/components/ProductCard";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Account = () => {
   const { user, logout } = useAuth();
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [profileForm, setProfileForm] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: "",
     address: "",
   });
+  
+  // Fetch recently viewed products when component mounts
+  useEffect(() => {
+    const products = getRecentlyViewedProducts();
+    setRecentlyViewed(products);
+  }, []);
   
   if (!user) {
     return <Navigate to="/login" />;
@@ -43,14 +53,16 @@ const Account = () => {
       date: "2023-05-15",
       status: "Delivered",
       total: "₹2,095,000",
-      items: 1
+      items: 1,
+      product: "Ducati Panigale V4",
     },
     {
       id: "SB-157721",
       date: "2023-02-28",
       status: "Processing",
       total: "₹1,549,900",
-      items: 1
+      items: 1,
+      product: "Kawasaki Ninja ZX-10R",
     }
   ];
 
@@ -142,52 +154,65 @@ const Account = () => {
                     </Button>
                   </div>
                   
-                  <div className="border rounded-lg p-6">
-                    <h3 className="font-medium mb-4 flex items-center">
-                      <Package className="mr-2 h-4 w-4" />
-                      Recent Orders
-                    </h3>
-                    {mockOrders.length > 0 ? (
-                      <div className="space-y-4">
-                        {mockOrders.slice(0, 2).map((order) => (
-                          <div key={order.id} className="border rounded-md p-3 text-sm">
-                            <div className="flex justify-between mb-1">
-                              <span className="font-medium">Order #{order.id}</span>
-                              <span className={`px-2 py-0.5 rounded-full text-xs ${
-                                order.status === "Delivered" 
-                                ? "bg-green-100 text-green-800" 
-                                : "bg-yellow-100 text-yellow-800"
-                              }`}>
-                                {order.status}
-                              </span>
+                  <Card>
+                    <CardContent className="p-6">
+                      <h3 className="font-medium mb-4 flex items-center">
+                        <Package className="mr-2 h-4 w-4" />
+                        Recent Orders
+                      </h3>
+                      {mockOrders.length > 0 ? (
+                        <div className="space-y-4">
+                          {mockOrders.slice(0, 2).map((order) => (
+                            <div key={order.id} className="border rounded-md p-3 text-sm">
+                              <div className="flex justify-between mb-1">
+                                <span className="font-medium">Order #{order.id}</span>
+                                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                  order.status === "Delivered" 
+                                  ? "bg-green-100 text-green-800" 
+                                  : "bg-yellow-100 text-yellow-800"
+                                }`}>
+                                  {order.status}
+                                </span>
+                              </div>
+                              <div className="text-muted-foreground">
+                                {new Date(order.date).toLocaleDateString()}
+                              </div>
+                              <div className="mt-1">
+                                <span className="text-muted-foreground">Item:</span> {order.product}
+                              </div>
+                              <div className="flex justify-between mt-2">
+                                <span>{order.items} item(s)</span>
+                                <span className="font-medium">{order.total}</span>
+                              </div>
                             </div>
-                            <div className="text-muted-foreground">
-                              {new Date(order.date).toLocaleDateString()}
-                            </div>
-                            <div className="flex justify-between mt-2">
-                              <span>{order.items} item(s)</span>
-                              <span className="font-medium">{order.total}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">You have no recent orders.</p>
-                    )}
-                    <Button variant="link" className="px-0 mt-2" asChild>
-                      <Link to="/account/orders">View All Orders</Link>
-                    </Button>
-                  </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">You have no recent orders.</p>
+                      )}
+                      <Button variant="link" className="px-0 mt-2" asChild>
+                        <Link to="/account/orders">View All Orders</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
                 
                 <div className="mt-8 border rounded-lg p-6">
                   <h3 className="font-medium mb-4">Recently Viewed Products</h3>
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>Products you view will appear here.</p>
-                    <Button variant="link" asChild>
-                      <Link to="/products">Browse Products</Link>
-                    </Button>
-                  </div>
+                  {recentlyViewed.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {recentlyViewed.map(product => (
+                        <ProductCard key={product.id} product={product} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>Products you view will appear here.</p>
+                      <Button variant="link" asChild>
+                        <Link to="/products">Browse Products</Link>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               
@@ -306,7 +331,9 @@ const Account = () => {
                           </td>
                           <td className="px-4 py-4 text-right">{order.total}</td>
                           <td className="px-4 py-4 text-center">
-                            <Button variant="ghost" size="sm">View</Button>
+                            <Button variant="ghost" size="sm" asChild>
+                              <Link to={`/account/orders?id=${order.id}`}>View</Link>
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -320,6 +347,15 @@ const Account = () => {
                       )}
                     </tbody>
                   </table>
+                </div>
+                
+                <div className="mt-4 flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {mockOrders.length} orders
+                  </p>
+                  <Button variant="outline" asChild>
+                    <Link to="/products">Continue Shopping</Link>
+                  </Button>
                 </div>
               </TabsContent>
             </Tabs>

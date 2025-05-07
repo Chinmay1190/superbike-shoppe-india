@@ -20,6 +20,7 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Account from "./pages/Account";
+import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/account" element={<Account />} />
+                <Route path="/account/orders" element={<Orders />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
